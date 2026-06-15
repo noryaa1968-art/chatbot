@@ -42,13 +42,6 @@ def get_users(
 def get_me(
     current_user: User = Depends(get_current_user)
 ):
-
-    if not current_user:
-
-        return {
-            "error": "Unauthorized"
-        }
-
     return {
         "username": current_user.username,
         "email": current_user.email

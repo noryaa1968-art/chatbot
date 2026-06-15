@@ -1,11 +1,19 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from sqlalchemy.orm import Session
+
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+ # pragma: no cover - optional dependency guard
+    
 
 from langchain_community.chat_message_histories import (
     ChatMessageHistory
 )
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+
 from langchain_core.runnables.history import RunnableWithMessageHistory
+
 
 from app.models.chat import Chat
 from app.models.message import Message
@@ -18,7 +26,14 @@ import asyncio
 
 
 
-llm=ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.9,google_api_key=GEMINI_API_KEY)
+if ChatGoogleGenerativeAI and GEMINI_API_KEY:
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.9,
+        google_api_key=GEMINI_API_KEY,
+    )
+else:
+    llm = None
 
 
 
@@ -40,14 +55,19 @@ def get_session_history(session_id: str):
   return store[session_id]
 
 # Create the conversation chain
-conversation = RunnableWithMessageHistory(
-   chain,
-    get_session_history
-)
+if RunnableWithMessageHistory is not None and llm is not None:
+    conversation = RunnableWithMessageHistory(
+        llm,
+        get_session_history,
+    )
+else:
+    conversation = None
 
 def get_ai_response(message: str):
-    try:
+    if llm is None or conversation is None:
+        return "AI service is unavailable. Set GEMINI_API_KEY to enable chat responses."
 
+    try:
         response = conversation.invoke(
             {"input": message},
             {"configurable": {"session_id": "default"}}
@@ -56,7 +76,6 @@ def get_ai_response(message: str):
         return response.content
 
     except Exception as e:
-
         return f"Error: {str(e)}"
 
 def create_chat(
@@ -88,6 +107,9 @@ def get_chat_messages(
 async def stream_ai_response(
     message: str
 ):
+    if llm is None:
+        yield "AI service is unavailable. Set GEMINI_API_KEY to enable streaming responses."
+        return
 
     response = llm.invoke(
         message
@@ -96,8 +118,6 @@ async def stream_ai_response(
     text = response.content
 
     for word in text.split():
-
         yield word + " "
-
         await asyncio.sleep(0.05)
     
