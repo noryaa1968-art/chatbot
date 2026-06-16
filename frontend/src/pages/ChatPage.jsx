@@ -7,18 +7,16 @@ function ChatPage({ onBack }) {
   const [isLoading, setIsLoading] = useState(false)
   const chatContainerRef = useRef(null)
   const [isNearBottom, setIsNearBottom] = useState(true)
-  const scrollIntervalRef = useRef(null) // Ref for the interval
 
-  // Handle manual scroll detection
   const handleScroll = () => {
     const container = chatContainerRef.current
     if (!container) return
     const { scrollTop, scrollHeight, clientHeight } = container
-    const nearBottom = scrollHeight - scrollTop - clientHeight < 100
+    const nearBottom = scrollHeight - scrollTop - clientHeight < 50
     setIsNearBottom(nearBottom)
   }
 
-  // Auto-scroll only if near bottom
+  // Auto-scroll only if near bottom or no messages
   useEffect(() => {
     const container = chatContainerRef.current
     if (!container) return
@@ -27,48 +25,11 @@ function ChatPage({ onBack }) {
     }
   }, [messages, isLoading, isNearBottom])
 
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current)
-        scrollIntervalRef.current = null
-      }
-    }
-  }, [])
-
-  // --- Scroll Button Logic (Hold to scroll) ---
-  const startScrolling = (direction) => {
-    // Clear any existing interval first
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current)
-      scrollIntervalRef.current = null
-    }
-
-    // Small initial jump for immediate feedback
+  const scrollToBottom = () => {
     const container = chatContainerRef.current
     if (container) {
-      const step = direction === 'up' ? -30 : 30
-      container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, container.scrollTop + step))
-    }
-
-    // Then start continuous scrolling
-    scrollIntervalRef.current = setInterval(() => {
-      const container = chatContainerRef.current
-      if (!container) {
-        stopScrolling()
-        return
-      }
-      const step = direction === 'up' ? -15 : 15
-      const newScrollTop = container.scrollTop + step
-      container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, newScrollTop))
-    }, 30) // runs every 30ms for smooth scrolling
-  }
-
-  const stopScrolling = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current)
-      scrollIntervalRef.current = null
+      container.scrollTop = container.scrollHeight
+      setIsNearBottom(true)
     }
   }
 
@@ -134,7 +95,7 @@ function ChatPage({ onBack }) {
         <main
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="chat-scrollbar flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+          className="chat-scrollbar flex-1 overflow-y-scroll px-4 py-6 sm:px-6 lg:px-8"
         >
           <div className="mx-auto flex max-w-3xl flex-col gap-4">
             {messages.length === 0 && (
@@ -173,38 +134,15 @@ function ChatPage({ onBack }) {
           </div>
         </main>
 
-        {/* ===== NEW: Floating Scroll Buttons ===== */}
-        <div className="absolute bottom-28 right-6 z-10 flex flex-col gap-2">
-          {/* Scroll Up Button */}
+        {/* Scroll-to-Bottom Button (appears only when scrolled up) */}
+        {!isNearBottom && messages.length > 0 && (
           <button
-            onMouseDown={() => startScrolling('up')}
-            onMouseUp={stopScrolling}
-            onMouseLeave={stopScrolling}
-            onTouchStart={() => startScrolling('up')}
-            onTouchEnd={stopScrolling}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#40414f] text-white shadow-lg transition hover:bg-[#565869] active:scale-95"
-            aria-label="Scroll up"
+            onClick={scrollToBottom}
+            className="absolute bottom-28 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[#40414f] px-4 py-2 text-sm text-white shadow-lg transition hover:bg-[#565869]"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
+            Scroll to bottom ↓
           </button>
-
-          {/* Scroll Down Button */}
-          <button
-            onMouseDown={() => startScrolling('down')}
-            onMouseUp={stopScrolling}
-            onMouseLeave={stopScrolling}
-            onTouchStart={() => startScrolling('down')}
-            onTouchEnd={stopScrolling}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#40414f] text-white shadow-lg transition hover:bg-[#565869] active:scale-95"
-            aria-label="Scroll down"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
+        )}
 
         {/* Input Footer */}
         <footer className="border-t border-gray-700 bg-[#343541] px-4 py-4 sm:px-6 lg:px-8">
