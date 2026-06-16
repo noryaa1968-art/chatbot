@@ -1,10 +1,47 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { sendMessage } from '../services/api'
 
 function ChatPage({ onBack }) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+
+  // Ref for the scrollable container and the bottom anchor
+  const chatContainerRef = useRef(null)
+  const messagesEndRef = useRef(null)
+
+  // State to track if user is near the bottom
+  const [isNearBottom, setIsNearBottom] = useState(true)
+
+  // Function to check scroll position
+  const handleScroll = () => {
+    const container = chatContainerRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    // If the distance from the bottom is less than 100px, consider it "near bottom"
+    const nearBottom = scrollHeight - scrollTop - clientHeight < 100
+    setIsNearBottom(nearBottom)
+  }
+
+  // Auto-scroll to bottom when messages or loading state change,
+  // but only if the user is near the bottom (or it's the first message)
+  useEffect(() => {
+    // If there are no messages, we still want to scroll to show the welcome message
+    // For subsequent changes, check isNearBottom
+    if (messages.length === 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, isLoading, isNearBottom])
+
+  // Reset scroll state when a new message is added (optional)
+  // This ensures the user can scroll down after a new message appears even if they were away
+  // But we already handle it via isNearBottom
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return
@@ -48,7 +85,10 @@ function ChatPage({ onBack }) {
           Start a new conversation
         </div>
 
-        <button onClick={onBack} className="mt-4 rounded-md border border-gray-600 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800">
+        <button
+          onClick={onBack}
+          className="mt-4 rounded-md border border-gray-600 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+        >
           Logout
         </button>
       </aside>
@@ -61,17 +101,26 @@ function ChatPage({ onBack }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+        >
           <div className="mx-auto flex max-w-3xl flex-col gap-4">
             {messages.length === 0 && (
               <div className="rounded-2xl border border-gray-700 bg-[#444654] p-8 text-center shadow-sm">
                 <h2 className="mb-2 text-lg font-semibold">How can I help you today?</h2>
-                <p className="text-sm text-gray-400">Start a conversation and the assistant will respond here.</p>
+                <p className="text-sm text-gray-400">
+                  Start a conversation and the assistant will respond here.
+                </p>
               </div>
             )}
 
             {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={index}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 <div
                   className={`message-enter max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-7 ${
                     msg.role === 'user'
@@ -91,6 +140,9 @@ function ChatPage({ onBack }) {
                 </div>
               </div>
             )}
+
+            {/* Empty div for scrolling target */}
+            <div ref={messagesEndRef} />
           </div>
         </main>
 
