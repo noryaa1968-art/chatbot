@@ -125,9 +125,10 @@
   color: #f7f9fc;
 }
 
+/* ===== 🔥 CHANGED: Force scrollbar to always appear ===== */
 .message-area {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;   /* changed from 'auto' to 'scroll' */
   padding: 20px 28px 12px;
 }
 
@@ -228,6 +229,7 @@
   box-shadow: 0 14px 28px rgba(79, 70, 229, 0.3);
 }
 
+/* ===== GLOBAL FALLBACK SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -239,6 +241,31 @@
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
+}
+
+/* ===== 🔥 NEW: CHAT-AREA SCROLLBAR (wider & more visible) ===== */
+.message-area::-webkit-scrollbar {
+  width: 12px;               /* wider for easier grabbing */
+}
+
+.message-area::-webkit-scrollbar-track {
+  background: #1e2332;       /* dark track for contrast */
+  border-radius: 8px;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background: #6b7a9f;       /* lighter thumb */
+  border-radius: 8px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+  background: #8a9bc0;       /* even lighter on hover */
+}
+
+/* Firefox support */
+.message-area {
+  scrollbar-width: thin;
+  scrollbar-color: #6b7a9f #1e2332;
 }
 
 @keyframes fadeInUp {
