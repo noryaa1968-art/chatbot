@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BaseURL = 'https://refactored-space-giggle-p7jjwrr9gw9rc7r4j-8000.app.github.dev'
+const BaseURL = 'https://chatbot-backend-vg55.onrender.com'
 const api = axios.create({
   baseURL: BaseURL,
 })
