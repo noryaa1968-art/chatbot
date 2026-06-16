@@ -5,43 +5,25 @@ function ChatPage({ onBack }) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-
-  // Ref for the scrollable container and the bottom anchor
   const chatContainerRef = useRef(null)
-  const messagesEndRef = useRef(null)
-
-  // State to track if user is near the bottom
   const [isNearBottom, setIsNearBottom] = useState(true)
 
-  // Function to check scroll position
   const handleScroll = () => {
     const container = chatContainerRef.current
     if (!container) return
-
     const { scrollTop, scrollHeight, clientHeight } = container
-    // If the distance from the bottom is less than 100px, consider it "near bottom"
     const nearBottom = scrollHeight - scrollTop - clientHeight < 100
     setIsNearBottom(nearBottom)
   }
 
-  // Auto-scroll to bottom when messages or loading state change,
-  // but only if the user is near the bottom (or it's the first message)
+  // Auto-scroll only if near bottom or first message
   useEffect(() => {
-    // If there are no messages, we still want to scroll to show the welcome message
-    // For subsequent changes, check isNearBottom
-    if (messages.length === 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      return
-    }
-
-    if (isNearBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = chatContainerRef.current
+    if (!container) return
+    if (isNearBottom || messages.length === 0) {
+      container.scrollTop = container.scrollHeight
     }
   }, [messages, isLoading, isNearBottom])
-
-  // Reset scroll state when a new message is added (optional)
-  // This ensures the user can scroll down after a new message appears even if they were away
-  // But we already handle it via isNearBottom
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return
@@ -58,7 +40,6 @@ function ChatPage({ onBack }) {
     try {
       const data = await sendMessage(userMessage.content)
       const aiReply = data?.response || 'Sorry, I could not generate a reply.'
-
       setMessages((prev) => [...prev, { role: 'ai', content: aiReply }])
     } catch (error) {
       console.error(error)
@@ -73,6 +54,7 @@ function ChatPage({ onBack }) {
 
   return (
     <div className="chat-shell flex h-screen bg-[#202123] text-gray-100">
+      {/* Sidebar */}
       <aside className="hidden w-72 flex-col border-r border-gray-700 bg-[#171717] p-4 md:flex">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold">New chat</h2>
@@ -80,11 +62,9 @@ function ChatPage({ onBack }) {
             +
           </button>
         </div>
-
         <div className="flex-1 rounded-xl border border-gray-700 bg-[#2b2c2f] p-3 text-sm text-gray-300">
           Start a new conversation
         </div>
-
         <button
           onClick={onBack}
           className="mt-4 rounded-md border border-gray-600 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
@@ -93,7 +73,9 @@ function ChatPage({ onBack }) {
         </button>
       </aside>
 
+      {/* Main Chat Area */}
       <div className="flex flex-1 flex-col bg-[#343541]">
+        {/* Header */}
         <header className="flex items-center justify-between border-b border-gray-700 bg-[#343541] px-5 py-4">
           <div>
             <h1 className="text-lg font-semibold">ChatGPT</h1>
@@ -101,10 +83,11 @@ function ChatPage({ onBack }) {
           </div>
         </header>
 
+        {/* Scrollable Messages */}
         <main
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+          className="chat-scrollbar flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
         >
           <div className="mx-auto flex max-w-3xl flex-col gap-4">
             {messages.length === 0 && (
@@ -140,12 +123,10 @@ function ChatPage({ onBack }) {
                 </div>
               </div>
             )}
-
-            {/* Empty div for scrolling target */}
-            <div ref={messagesEndRef} />
           </div>
         </main>
 
+        {/* Input Footer */}
         <footer className="border-t border-gray-700 bg-[#343541] px-4 py-4 sm:px-6 lg:px-8">
           <div className="composer-glow mx-auto flex max-w-3xl gap-3 rounded-2xl border border-gray-600 bg-[#40414f] p-3 shadow-sm">
             <input
