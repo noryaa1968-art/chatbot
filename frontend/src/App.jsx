@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 import Sidebar from './components/Sidebar'
 import MessageList from './components/MessageList'
@@ -16,37 +16,6 @@ function App() {
   const [activeChatId, setActiveChatId] = useState(1)
   const [draft, setDraft] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-
-  // ----- Scroll logic (added) -----
-  const messageContainerRef = useRef(null)
-  const [isNearBottom, setIsNearBottom] = useState(true)
-
-  const handleScroll = () => {
-    const container = messageContainerRef.current
-    if (!container) return
-    const { scrollTop, scrollHeight, clientHeight } = container
-    const nearBottom = scrollHeight - scrollTop - clientHeight < 50
-    setIsNearBottom(nearBottom)
-  }
-
-  // Auto-scroll when messages or loading state change
-  useEffect(() => {
-    const container = messageContainerRef.current
-    if (!container) return
-    const messages = activeChat?.messages ?? []
-    if (isNearBottom || messages.length === 0) {
-      container.scrollTop = container.scrollHeight
-    }
-  }, [activeChat?.messages, isLoading, isNearBottom])
-
-  const scrollToBottom = () => {
-    const container = messageContainerRef.current
-    if (container) {
-      container.scrollTop = container.scrollHeight
-      setIsNearBottom(true)
-    }
-  }
-  // ----- End of scroll logic -----
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) ?? chats[0]
 
@@ -130,7 +99,7 @@ function App() {
         onSelectChat={setActiveChatId}
       />
 
-      <main className="chat-panel relative">
+      <main className="chat-panel">
         <header className="chat-header">
           <div>
             <p className="eyebrow">AI Assistant</p>
@@ -138,24 +107,7 @@ function App() {
           </div>
         </header>
 
-        {/* Scrollable container wrapping MessageList */}
-        <div
-          ref={messageContainerRef}
-          onScroll={handleScroll}
-          className="chat-scrollbar flex-1 overflow-y-scroll px-4 py-6 sm:px-6 lg:px-8"
-        >
-          <MessageList messages={activeChat?.messages ?? []} isLoading={isLoading} />
-        </div>
-
-        {/* Scroll‑to‑bottom button (appears only when scrolled up) */}
-        {!isNearBottom && (activeChat?.messages?.length ?? 0) > 0 && (
-          <button
-            onClick={scrollToBottom}
-            className="absolute bottom-28 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[#40414f] px-4 py-2 text-sm text-white shadow-lg transition hover:bg-[#565869]"
-          >
-            Scroll to bottom ↓
-          </button>
-        )}
+        <MessageList messages={activeChat?.messages ?? []} isLoading={isLoading} />
 
         <ChatInput value={draft} onChange={setDraft} onSend={handleSend} />
       </main>
