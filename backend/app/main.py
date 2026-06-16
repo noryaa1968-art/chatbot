@@ -10,7 +10,7 @@ from .database.base import Base
 from .models.user import User
 
 
-app = FastAPI(title=PROJECT_NAME)
+app = FastAPI(title="My API")
 
 app.add_middleware(
     CORSMiddleware,
