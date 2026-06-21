@@ -17,13 +17,13 @@ function ChatPage({ onBack }) {
   }
 
   // Auto-scroll only if near bottom or no messages
-  useEffect(() => {
-    const container = chatContainerRef.current
-    if (!container) return
-    if (isNearBottom || messages.length === 0) {
-      container.scrollTop = container.scrollHeight
-    }
-  }, [messages, isLoading, isNearBottom])
+  //useEffect(() => {
+   // const container = chatContainerRef.current
+   // if (!container) return
+    //if (isNearBottom || messages.length === 0) {
+     // container.scrollTop = container.scrollHeight
+    //}
+  //}, [messages, isLoading, isNearBottom])"""
 
   const scrollToBottom = () => {
     const container = chatContainerRef.current
